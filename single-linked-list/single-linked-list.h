@@ -1,6 +1,6 @@
-#pragma once
-
+#include <cassert>
 #include <cstddef>
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <utility>
@@ -162,25 +162,20 @@ public:
 
     template <typename T>
     void MakeAList(T begin_iter, T end_iter) {
-        auto temp_iter = this->before_begin();
+        SingleLinkedList tmp;
+        auto temp_iter = tmp.before_begin();
         for (auto iter = begin_iter; iter != end_iter; iter++) {
-            temp_iter = InsertAfter(temp_iter, *iter);
+            temp_iter = tmp.InsertAfter(temp_iter, *iter);
         }
+        swap(tmp);
     }
 
-    SingleLinkedList(std::initializer_list<Type> values)
-    {
-        assert(size_ == 0 && head_.next_node == nullptr);
-        SingleLinkedList tmp;
-        tmp.MakeAList(values.begin(), values.end());
-        swap(tmp);
+    SingleLinkedList(std::initializer_list<Type> values) {
+        MakeAList(values.begin(), values.end());
     }
 
     SingleLinkedList(const SingleLinkedList& other) {
-        assert(size_ == 0 && head_.next_node == nullptr);
-        SingleLinkedList tmp;
-        tmp.MakeAList(other.begin(), other.end());
-        swap(tmp);
+        MakeAList(other.begin(), other.end());
     }
 
     SingleLinkedList& operator=(const SingleLinkedList& rhs) {
@@ -209,6 +204,7 @@ public:
         Node* node_to_pop = head_.next_node;
         head_.next_node = head_.next_node->next_node;
         delete node_to_pop;
+        --size_;
     }
 
     Iterator EraseAfter(ConstIterator pos) noexcept {
@@ -216,6 +212,7 @@ public:
         Node* node_to_erase = pos.node_->next_node;
         pos.node_->next_node = node_to_erase->next_node;
         delete node_to_erase;
+        --size_;
         return Iterator{ pos.node_->next_node };
     }
 
@@ -231,8 +228,11 @@ void swap(SingleLinkedList<Type>& lhs, SingleLinkedList<Type>& rhs) noexcept {
 
 template <typename Type>
 bool operator==(const SingleLinkedList<Type>& lhs, const SingleLinkedList<Type>& rhs) {
-    if (lhs.GetSize() == rhs.GetSize() && lhs.begin() == rhs.begin()) {
+    if (lhs.begin() == rhs.begin()) {
         return true;
+    }
+    if (lhs.GetSize() != rhs.GetSize()) {
+        return false;
     }
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
